@@ -112,16 +112,20 @@ func (route *Route) createResponses() {
 }
 
 func getResponse(method, uri, body string, requestHeaders http.Header) *Response {
-	// Check if we have a match in the highest priority splice
+	uriWithoutParams := strings.SplitN(uri, "?", 2)[0];
+
+	// Check if we have a match in the highest priority splice 
 	for _, response := range RequestBodyResponseMappings {
-		if uri == response.URI && method == response.Method && strings.Contains(body, response.RequestBody) {
+		// (       with          or        without query params      )
+		if ( uri == response.URI || uriWithoutParams == response.URI ) && method == response.Method && strings.Contains(body, response.RequestBody) {
 			return &response
 		}
 	}
 
 	// Check if we have a match in the second highest priority splice
 	for _, response := range RequestHeaderResponseMappings {
-		if uri == response.URI && method == response.Method && response.RequestHeader != "" {
+		// (       with          or        without query params      )
+		if ( uri == response.URI || uriWithoutParams == response.URI ) && method == response.Method && response.RequestHeader != "" {
 			suppliedMatchHeader := strings.Split(response.RequestHeader, ":")
 			if len(suppliedMatchHeader) > 2 {
 				log.Fatalf(`Wrongfully use of requestHeader! Should only be "key: value", you had: '%v'!`, suppliedMatchHeader)
@@ -137,7 +141,8 @@ func getResponse(method, uri, body string, requestHeaders http.Header) *Response
 
 	// Check if we have a match in the lowest priority splice
 	for _, response := range LowestPriorityResponseMappings {
-		if uri == response.URI && method == response.Method {
+		// (       with          or        without query params      )
+		if ( uri == response.URI || uriWithoutParams == response.URI ) && method == response.Method {
 			return &response
 		}
 	}
